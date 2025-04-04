@@ -88,11 +88,14 @@ public class Calculator {
      * @param expr обработанное выражение
      * @param variables карта переменных (имя → значение)
      * @return результат вычисления
+     * @throws IllegalArgumentException при ошибках вычисления или синтаксических ошибках
      */
     private double evaluateExpression(String expr, Map<String, Double> variables) {
         try {
             String exprWithValues = substituteVariables(expr, variables);
             return parseExpression(exprWithValues);
+        } catch (ArithmeticException e) {
+            throw new IllegalArgumentException("Арифметическая ошибка: " + e.getMessage());
         } catch (Exception e) {
             throw new IllegalArgumentException("Ошибка вычисления выражения: " + e.getMessage());
         }
@@ -158,16 +161,24 @@ public class Calculator {
             double parseTerm() {
                 double x = parseFactor();
                 for (;;) {
-                    if      (eat('*')) x *= parseFactor();
-                    else if (eat('/')) x /= parseFactor();
-                    else return x;
+                    if (eat('*')) {
+                        x *= parseFactor();
+                    } else if (eat('/')) {
+                        double divisor = parseFactor();
+                        if (divisor == 0) {
+                            throw new ArithmeticException("Деление на ноль");
+                        }
+                        x /= divisor;
+                    } else {
+                        return x;
+                    }
                 }
             }
 
             /**
              * Обрабатывает числа, скобки, функции и унарные операторы.
              */
-            double parseFactor() {
+            private double parseFactor() {
                 if (eat('+')) return parseFactor();
                 if (eat('-')) return -parseFactor();
 
@@ -175,24 +186,62 @@ public class Calculator {
                 int startPos = this.pos;
                 if (eat('(')) {
                     x = parseExpression();
-                    eat(')');
+                    if (!eat(')')) throw new RuntimeException("Не хватает закрывающей скобки");
                 } else if ((ch >= '0' && ch <= '9') || ch == '.') {
                     while ((ch >= '0' && ch <= '9') || ch == '.') nextChar();
                     x = Double.parseDouble(expr.substring(startPos, this.pos));
                 } else if (ch >= 'a' && ch <= 'z') {
-                    while (ch >= 'a' && ch <= 'z') nextChar();
+                    // Считываем имя функции (может содержать цифры, например "log10")
+                    while ((ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9')) nextChar();
                     String func = expr.substring(startPos, this.pos);
-                    x = parseFactor();
-                    if (functions.containsKey(func)) {
-                        x = functions.get(func).apply(new double[]{x});
+
+                    // Проверяем наличие открывающей скобки
+                    if (!eat('(')) {
+                        throw new RuntimeException("Не хватает открывающей скобки после функции " + func);
+                    }
+
+                    // Обрабатываем аргументы функции
+                    if (func.equals("pow")) {
+                        // Для pow ожидаем два аргумента
+                        x = parseExpression();
+                        if (!eat(',')) throw new RuntimeException("Ожидается запятая между аргументами функции pow");
+                        double exponent = parseExpression();
+                        if (!eat(')')) throw new RuntimeException("Не хватает закрывающей скобки для функции pow");
+                        return Math.pow(x, exponent);
                     } else {
-                        throw new RuntimeException("Неизвестная функция: " + func);
+                        // Для остальных функций ожидаем один аргумент
+                        x = parseExpression();
+                        if (!eat(')')) throw new RuntimeException("Не хватает закрывающей скобки после аргумента функции " + func);
+
+                        switch (func) {
+                            case "sqrt":
+                                if (x < 0) throw new IllegalArgumentException("Квадратный корень из отрицательного числа");
+                                return Math.sqrt(x);
+                            case "sin": return Math.sin(x);
+                            case "cos": return Math.cos(x);
+                            case "tan": return Math.tan(x);
+                            case "ln":
+                                if (x <= 0) throw new IllegalArgumentException("Логарифм от неположительного числа");
+                                return Math.log(x);
+                            case "log10":
+                                if (x <= 0) throw new IllegalArgumentException("Логарифм от неположительного числа");
+                                return Math.log10(x);
+                            case "log2":
+                                if (x <= 0) throw new IllegalArgumentException("Логарифм от неположительного числа");
+                                return Math.log(x)/Math.log(2);
+                            case "abs": return Math.abs(x);
+                            default:
+                                throw new RuntimeException("Неизвестная функция: " + func);
+                        }
                     }
                 } else {
                     throw new RuntimeException("Неожиданный символ: " + (char)ch);
                 }
 
-                if (eat('^')) x = Math.pow(x, parseFactor());
+                if (eat('^')) {
+                    double exponent = parseFactor();
+                    x = Math.pow(x, exponent);
+                }
 
                 return x;
             }
