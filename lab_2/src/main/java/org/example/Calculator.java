@@ -2,6 +2,7 @@ package org.example;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.*;
 
 public class Calculator {
     private final Map<String, Function<double[], Double>> functions = new HashMap<>();
@@ -22,8 +23,40 @@ public class Calculator {
         functions.put("abs", args -> Math.abs(args[0]));
     }
 
-    public double evaluate(String expression) throws IllegalArgumentException {
-        return parseExpression(expression.replaceAll("\\s+", ""));
+    public double evaluate(String expression, Map<String, Double> variables) throws IllegalArgumentException {
+        String processedExpr = preprocessExpression(expression);
+        return evaluateExpression(processedExpr, variables);
+    }
+
+    public Set<String> findVariables(String expression) {
+        Set<String> vars = new HashSet<>();
+        Pattern pattern = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*");
+        Matcher matcher = pattern.matcher(expression);
+
+        while (matcher.find()) {
+            String var = matcher.group();
+            if (!functions.containsKey(var)) {
+                vars.add(var);
+            }
+        }
+        return vars;
+    }
+
+    private String preprocessExpression(String expr) {
+        String processed = expr.replaceAll("\\s+", "");
+        if (processed.isEmpty()) {
+            throw new IllegalArgumentException("Пустое выражение");
+        }
+        return processed;
+    }
+
+    private double evaluateExpression(String expr, Map<String, Double> variables) {
+        try {
+            String exprWithValues = substituteVariables(expr, variables);
+            return parseExpression(exprWithValues);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Ошибка вычисления выражения: " + e.getMessage());
+        }
     }
 
     private double parseExpression(String expr) {
@@ -98,5 +131,13 @@ public class Calculator {
                 return x;
             }
         }.parse();
+    }
+
+    private String substituteVariables(String expr, Map<String, Double> variables) {
+        String result = expr;
+        for (Map.Entry<String, Double> entry : variables.entrySet()) {
+            result = result.replaceAll(Pattern.quote(entry.getKey()), entry.getValue().toString());
+        }
+        return result;
     }
 }
