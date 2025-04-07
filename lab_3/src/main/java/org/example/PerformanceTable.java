@@ -1,12 +1,23 @@
 package org.example;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Класс для сравнения производительности операций ArrayList и LinkedList.
+ * Содержит методы для тестирования различных операций над списками и вывода результатов.
+ */
 public class PerformanceTable {
+    /** Количество итераций для основных тестов */
     private static final int ITERATIONS = 10000;
+
+    /** Количество итераций для разогрева JVM */
     private static final int WARMUP_ITERATIONS = 1000;
 
+    /**
+     * Запускает все тесты производительности и выводит результаты в табличном виде.
+     */
     public void runBenchmarks() {
         warmUp();
 
@@ -22,6 +33,10 @@ public class PerformanceTable {
         testRemoveFromEnd();
     }
 
+    /**
+     * Метод для "разогрева" JVM перед проведением замеров производительности.
+     * Выполняет основные операции над списками, чтобы JIT-компилятор оптимизировал код.
+     */
     private void warmUp() {
         List<Integer> warmupList1 = new ArrayList<>();
         List<Integer> warmupList2 = new LinkedList<>();
@@ -46,6 +61,9 @@ public class PerformanceTable {
         }
     }
 
+    /**
+     * Тестирует производительность операции добавления элементов в конец списка.
+     */
     private void testAddToEnd() {
         List<Integer> arrayList = new ArrayList<>();
         List<Integer> linkedList = new LinkedList<>();
@@ -65,6 +83,9 @@ public class PerformanceTable {
         printResult("add (конец)", arrayListTime, linkedListTime);
     }
 
+    /**
+     * Тестирует производительность операции добавления элементов в начало списка.
+     */
     private void testAddToBeginning() {
         List<Integer> arrayList = new ArrayList<>();
         List<Integer> linkedList = new LinkedList<>();
@@ -84,6 +105,9 @@ public class PerformanceTable {
         printResult("add (начало)", arrayListTime, linkedListTime);
     }
 
+    /**
+     * Тестирует производительность операции получения элементов по индексу.
+     */
     private void testGetRandom() {
         List<Integer> arrayList = new ArrayList<>();
         List<Integer> linkedList = new LinkedList<>();
@@ -108,6 +132,9 @@ public class PerformanceTable {
         printResult("get", arrayListTime, linkedListTime);
     }
 
+    /**
+     * Тестирует производительность операции удаления элементов из начала списка.
+     */
     private void testRemoveFromBeginning() {
         List<Integer> arrayList = new ArrayList<>();
         List<Integer> linkedList = new LinkedList<>();
@@ -132,6 +159,9 @@ public class PerformanceTable {
         printResult("remove (начало)", arrayListTime, linkedListTime);
     }
 
+    /**
+     * Тестирует производительность операции удаления элементов из конца списка.
+     */
     private void testRemoveFromEnd() {
         List<Integer> arrayList = new ArrayList<>();
         List<Integer> linkedList = new LinkedList<>();
@@ -156,6 +186,13 @@ public class PerformanceTable {
         printResult("remove (конец)", arrayListTime, linkedListTime);
     }
 
+    /**
+     * Выводит результаты теста в форматированном виде.
+     *
+     * @param operation название тестируемой операции
+     * @param arrayListTime время выполнения операции для ArrayList в наносекундах
+     * @param linkedListTime время выполнения операции для LinkedList в наносекундах
+     */
     private void printResult(String operation, long arrayListTime, long linkedListTime) {
         System.out.printf("%-18s | %-10d | %-15d | %-15d%n",
                 operation, ITERATIONS, arrayListTime, linkedListTime);
