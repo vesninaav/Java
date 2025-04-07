@@ -18,6 +18,8 @@ public class PerformanceTable {
         testAddToEnd();
         testAddToBeginning();
         testGetRandom();
+        testRemoveFromBeginning();
+        testRemoveFromEnd();
     }
 
     private void warmUp() {
@@ -33,6 +35,13 @@ public class PerformanceTable {
             }
             if (!warmupList2.isEmpty()) {
                 warmupList2.get(i % warmupList2.size());
+            }
+
+            if (!warmupList1.isEmpty()) {
+                warmupList1.remove(warmupList1.size() - 1);
+            }
+            if (!warmupList2.isEmpty()) {
+                warmupList2.remove(warmupList2.size() - 1);
             }
         }
     }
@@ -97,6 +106,54 @@ public class PerformanceTable {
         long linkedListTime = System.nanoTime() - start;
 
         printResult("get", arrayListTime, linkedListTime);
+    }
+
+    private void testRemoveFromBeginning() {
+        List<Integer> arrayList = new ArrayList<>();
+        List<Integer> linkedList = new LinkedList<>();
+
+        for (int i = 0; i < ITERATIONS; i++) {
+            arrayList.add(i);
+            linkedList.add(i);
+        }
+
+        long start = System.nanoTime();
+        for (int i = 0; i < ITERATIONS; i++) {
+            arrayList.remove(0);
+        }
+        long arrayListTime = System.nanoTime() - start;
+
+        start = System.nanoTime();
+        for (int i = 0; i < ITERATIONS; i++) {
+            linkedList.remove(0);
+        }
+        long linkedListTime = System.nanoTime() - start;
+
+        printResult("remove (начало)", arrayListTime, linkedListTime);
+    }
+
+    private void testRemoveFromEnd() {
+        List<Integer> arrayList = new ArrayList<>();
+        List<Integer> linkedList = new LinkedList<>();
+
+        for (int i = 0; i < ITERATIONS; i++) {
+            arrayList.add(i);
+            linkedList.add(i);
+        }
+
+        long start = System.nanoTime();
+        for (int i = 0; i < ITERATIONS; i++) {
+            arrayList.remove(arrayList.size() - 1);
+        }
+        long arrayListTime = System.nanoTime() - start;
+
+        start = System.nanoTime();
+        for (int i = 0; i < ITERATIONS; i++) {
+            linkedList.remove(linkedList.size() - 1);
+        }
+        long linkedListTime = System.nanoTime() - start;
+
+        printResult("remove (конец)", arrayListTime, linkedListTime);
     }
 
     private void printResult(String operation, long arrayListTime, long linkedListTime) {
