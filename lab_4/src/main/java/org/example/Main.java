@@ -1,17 +1,67 @@
 package org.example;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
+import com.opencsv.exceptions.CsvException;
+import java.io.*;
+import java.util.*;
+
 public class Main {
     public static void main(String[] args) {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        System.out.printf("Hello and welcome!");
+        String csvFilePath = "foreign_names.csv";
+        char separator = ';';
 
-        for (int i = 1; i <= 5; i++) {
-            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-            System.out.println("i = " + i);
+        List<Person> people = readPeopleFromCsv(csvFilePath, separator);
+        people.forEach(System.out::println);
+    }
+
+    public static List<Person> readPeopleFromCsv(String csvFilePath, char separator) {
+        List<Person> people = new ArrayList<>();
+        Map<String, Division> divisions = new HashMap<>();
+
+        try (InputStream in = Main.class.getClassLoader().getResourceAsStream(csvFilePath);
+             InputStreamReader reader = new InputStreamReader(in);
+             CSVReader csvReader = in == null ? null : new CSVReaderBuilder(reader)
+                     .withCSVParser(new com.opencsv.CSVParserBuilder()
+                             .withSeparator(separator)
+                             .build())
+                     .build()) {
+
+            if (csvReader == null) {
+                throw new FileNotFoundException(csvFilePath);
+            }
+
+            // Пропускаем заголовок
+            csvReader.readNext();
+
+            String[] nextLine;
+            while ((nextLine = csvReader.readNext()) != null) {
+                if (nextLine.length >= 6) {
+                    try {
+                        int id = Integer.parseInt(nextLine[0].trim());
+                        String name = nextLine[1].trim();
+                        String gender = nextLine[2].trim();
+                        String birthDate = nextLine[3].trim();
+                        String divisionName = nextLine[4].trim();
+                        int salary = Integer.parseInt(nextLine[5].trim());
+
+                        Division division = divisions.computeIfAbsent(
+                                divisionName.isEmpty() ? "Unknown" : divisionName,
+                                Division::new
+                        );
+
+                        people.add(new Person(id, name, gender, division, salary, birthDate));
+                    } catch (NumberFormatException e) {
+                        System.err.println("Ошибка преобразования числа в строке: " + Arrays.toString(nextLine));
+                    }
+                } else {
+                    System.err.println("Пропущена строка: недостаточно полей - " + Arrays.toString(nextLine));
+                }
+            }
+        } catch (IOException | CsvException e) {
+            e.printStackTrace();
         }
+
+        return people;
     }
 }

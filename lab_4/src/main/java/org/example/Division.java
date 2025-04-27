@@ -1,8 +1,4 @@
 package org.example;
-import com.opencsv.CSVReader;
-import com.opencsv.exceptions.CsvException;
-import java.io.*;
-import java.util.*;
 
 public class Division {
     private static int nextId = 1;
