@@ -53,4 +53,12 @@ public class Division {
     public String toString() {
         return "Division{id=" + id + ", name='" + name + "'}";
     }
+
+    /**
+     * Сбрасывает счетчик идентификаторов подразделений.
+     * Используется только в тестовых целях.
+     */
+    public static void resetIdCounter() {
+        nextId = 1;
+    }
 }
